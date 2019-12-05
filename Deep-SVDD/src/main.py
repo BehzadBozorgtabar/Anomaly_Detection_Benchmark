@@ -3,6 +3,7 @@ import torch
 import logging
 import random
 import numpy as np
+import os
 
 from utils.config import Config
 from utils.visualization.plot_images_grid import plot_images_grid
@@ -16,7 +17,7 @@ from datasets.main import load_dataset
 @click.command()
 @click.argument('dataset_name', type=click.Choice(['mnist', 'cifar10', 'CXR_author', 'fmnist']))
 @click.argument('net_name', type=click.Choice(['mnist_LeNet', 'cifar10_LeNet', 'cifar10_LeNet_ELU', 'CXR_resnet18','fmnist_LeNet']))
-@click.argument('xp_path', type=click.Path(exists=True))
+@click.argument('xp_path')
 @click.argument('data_path', type=click.Path(exists=True))
 @click.option('--load_config', type=click.Path(exists=True), default=None,
               help='Config JSON-file path (default: None).')
@@ -49,10 +50,12 @@ from datasets.main import load_dataset
               help='Specify the coefficient for reconstruction loss for training.')
 @click.option('--w_svdd', type=float, default=0.5,
               help='Specify the coefficient for svdd loss for training.')
+@click.option('--pre_training_epochs', type=int, default=0,
+              help='Specify the number of epochs for pre training.')
               
 
 def main(dataset_name, net_name, xp_path, data_path, load_config, load_model, objective, nu, device, seed,
-         optimizer_name, lr, n_epochs, lr_milestone, batch_size, weight_decay, n_jobs_dataloader, normal_class, isize, rep_dim, w_rec, w_svdd):
+         optimizer_name, lr, n_epochs, lr_milestone, batch_size, weight_decay, n_jobs_dataloader, normal_class, isize, rep_dim, w_rec, w_svdd, pre_training_epochs):
     """
     Deep SVDD, a fully deep method for anomaly detection.
 
@@ -66,6 +69,8 @@ def main(dataset_name, net_name, xp_path, data_path, load_config, load_model, ob
     cfg = Config(locals().copy())
 
     # Set up logging
+    if not os.path.exists(xp_path):
+        os.mkdir(xp_path)
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -138,7 +143,8 @@ def main(dataset_name, net_name, xp_path, data_path, load_config, load_model, ob
                     batch_size=cfg.settings['batch_size'],
                     weight_decay=cfg.settings['weight_decay'],
                     device=device,
-                    n_jobs_dataloader=n_jobs_dataloader)
+                    n_jobs_dataloader=n_jobs_dataloader,
+                    pre_training_epochs=pre_training_epochs)
 
 
 if __name__ == '__main__':

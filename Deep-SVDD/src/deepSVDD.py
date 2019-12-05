@@ -54,13 +54,14 @@ class DeepSVDD(object):
 
     def train(self, cfg, dataset: BaseADDataset, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 50,
               lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
-              n_jobs_dataloader: int = 0):
+              n_jobs_dataloader: int = 0, pre_training_epochs: int=0):
         """Trains the Deep SVDD model on the training data."""
 
         self.optimizer_name = optimizer_name
         self.trainer = DeepSVDDTrainer(self.objective, self.R, self.c, self.nu, optimizer_name, lr=lr,
-                                       n_epochs=n_epochs, lr_milestones=lr_milestones, batch_size=batch_size, weight_decay=weight_decay, device=device, n_jobs_dataloader=n_jobs_dataloader)
+                                       n_epochs=n_epochs, lr_milestones=lr_milestones, batch_size=batch_size, weight_decay=weight_decay, device=device, n_jobs_dataloader=n_jobs_dataloader, pre_training_epochs=pre_training_epochs)
         # Get the model
+        self.net = self.trainer.pretrain(self, cfg, dataset, self.net)
         self.net = self.trainer.train(self, cfg, dataset, self.net)
         self.results['train_time'] = self.trainer.train_time
 
@@ -80,7 +81,6 @@ class DeepSVDD(object):
         """Save Deep SVDD model to export_model."""
 
         net_dict = self.net.state_dict()
-        print(self.R, self.c)
         torch.save({'R': self.R,
                     'c': self.c,
                     'net_dict': net_dict}, export_model)

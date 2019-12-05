@@ -7,7 +7,7 @@ class BaseTrainer(ABC):
     """Trainer base class."""
 
     def __init__(self, optimizer_name: str, lr: float, n_epochs: int, lr_milestones: tuple, batch_size: int,
-                 weight_decay: float, device: str, n_jobs_dataloader: int):
+                 weight_decay: float, device: str, n_jobs_dataloader: int, pre_training_epochs: int):
         super().__init__()
         self.optimizer_name = optimizer_name
         self.lr = lr
@@ -17,6 +17,7 @@ class BaseTrainer(ABC):
         self.weight_decay = weight_decay
         self.device = device
         self.n_jobs_dataloader = n_jobs_dataloader
+        self.pre_training_epochs = pre_training_epochs
 
     @abstractmethod
     def train(self, dataset: BaseADDataset, net: BaseNet) -> BaseNet:

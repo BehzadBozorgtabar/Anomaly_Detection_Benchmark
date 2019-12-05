@@ -18,9 +18,9 @@ class DeepSVDDTrainer(BaseTrainer):
 
     def __init__(self, objective, R, c, nu: float, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 150,
                  lr_milestones: tuple = (), batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
-                 n_jobs_dataloader: int = 0):
+                 n_jobs_dataloader: int = 0, pre_training_epochs: int = 0):
         super().__init__(optimizer_name, lr, n_epochs, lr_milestones, batch_size, weight_decay, device,
-                         n_jobs_dataloader)
+                         n_jobs_dataloader, pre_training_epochs)
 
         assert objective in ('one-class', 'soft-boundary'), "Objective must be either 'one-class' or 'soft-boundary'."
         self.objective = objective
@@ -60,6 +60,10 @@ class DeepSVDDTrainer(BaseTrainer):
         start_time = time.time()
         net.train()
         best_score = 0
+        
+        if self.c is None:
+            self.c = self.init_center_c(train_loader, net)
+            
         for epoch in range(self.n_epochs):
 
             scheduler.step()
@@ -69,13 +73,13 @@ class DeepSVDDTrainer(BaseTrainer):
             loss_epoch = 0.0
             n_batches = 0
             epoch_start_time = time.time()
+            
             for data in tqdm(train_loader):
                 inputs, _, _ = data
                 inputs = inputs.to(self.device)
 
                 # Zero the network parameter gradients
                 optimizer.zero_grad()
-                self.c = self.init_center_c(train_loader, net)
                 # Update network parameters via backpropagation: forward + backward + optimize
                 features, rec_images = net(inputs)
                 dist = torch.sum((features - self.c) ** 2, dim=1)
@@ -128,6 +132,60 @@ class DeepSVDDTrainer(BaseTrainer):
 
                     plot_images_grid(X_normals, export_img=cfg.settings['xp_path'] + '/normals', title='Most normal examples', padding=2)
                     plot_images_grid(X_outliers, export_img=cfg.settings['xp_path'] + '/outliers', title='Most anomalous examples', padding=2)
+
+        self.train_time = time.time() - start_time
+        logger.info('Training time: %.3f' % self.train_time)
+
+        logger.info('Finished training.')
+
+        return net
+        
+    def pretrain(self, deepSVDD, cfg, dataset: BaseADDataset, net: BaseNet):
+        logger = logging.getLogger()
+
+        # Set device for network
+        net = net.to(self.device)
+
+        # Get train data loader
+        train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+
+        # Set optimizer (Adam optimizer for now)
+        optimizer = optim.Adam(net.parameters(), lr=self.lr, weight_decay=self.weight_decay,
+                               amsgrad=self.optimizer_name == 'amsgrad')
+
+        # Set learning rate scheduler
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=self.lr_milestones, gamma=0.1)
+
+        # Training
+        logger.info('Starting pretraining...')
+        start_time = time.time()
+        net.train()
+        best_score = 0
+        for epoch in range(self.pre_training_epochs):
+
+            loss_epoch = 0.0
+            n_batches = 0
+            epoch_start_time = time.time()
+            
+            for data in tqdm(train_loader):
+                inputs, _, _ = data
+                inputs = inputs.to(self.device)
+
+                # Zero the network parameter gradients
+                optimizer.zero_grad()
+                # Update network parameters via backpropagation: forward + backward + optimize
+                _, rec_images = net(inputs)
+                loss = torch.mean(torch.sum(torch.abs(rec_images - inputs), dim=tuple(range(1, rec_images.dim()))))
+                loss.backward()
+                optimizer.step()
+
+                loss_epoch += loss.item()
+                n_batches += 1
+
+            # log epoch statistics
+            epoch_train_time = time.time() - epoch_start_time
+            logger.info('  Epoch {}/{}\t Time: {:.3f}\t Loss: {:.8f}'
+                        .format(epoch + 1, self.pre_training_epochs, epoch_train_time, loss_epoch / n_batches))
 
         self.train_time = time.time() - start_time
         logger.info('Training time: %.3f' % self.train_time)
