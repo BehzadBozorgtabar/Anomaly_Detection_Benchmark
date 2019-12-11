@@ -131,8 +131,8 @@ def main(dataset_name, net_name, xp_path, data_path, load_config, load_model, ob
     logger.info('Training batch size: %d' % cfg.settings['batch_size'])
     logger.info('Training weight decay: %g' % cfg.settings['weight_decay'])
     logger.info('Training rep_dim: %d' % cfg.settings['rep_dim'])
-    logger.info('Training reconstruction loss coefficient: %d' % cfg.settings['w_rec'])
-    logger.info('Training svdd loss coefficient: %d' % cfg.settings['w_svdd'])
+    logger.info('Training reconstruction loss coefficient: %g' % cfg.settings['w_rec'])
+    logger.info('Training svdd loss coefficient: %g' % cfg.settings['w_svdd'])
 
     # Train model on dataset
     deep_SVDD.train(cfg, dataset,
