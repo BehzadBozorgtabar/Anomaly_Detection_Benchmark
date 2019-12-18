@@ -48,7 +48,8 @@ def kNN(epoch, net, lemniscate, trainloader, testloader, K, sigma, recompute_mem
 
             dist = (torch.acos(torch.mm(features, trainFeatures))+1)/2
 
-            scores, yi = dist.topk(K, dim=1, largest=False, sorted=True)
+            scores, _ = dist.topk(K, dim=1, largest=False, sorted=True)
+            scores = torch.mean(scores, dim=1)
 
             idx_label_score += list(zip(indexes.cpu().data.numpy().tolist(),
                                         targets.cpu().data.numpy().tolist(),

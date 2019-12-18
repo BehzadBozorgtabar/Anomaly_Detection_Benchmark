@@ -35,6 +35,7 @@ parser.add_argument('--nce-t', default=0.1, type=float,
 parser.add_argument('--nce-m', default=0.5, type=float,
                     metavar='M', help='momentum for non-parametric updates')
 parser.add_argument('--workers', help='Number of workers to load the data', default=0, type=int)
+parser.add_argument('--K', help='Number of points to consider to calculate the metric', default=1,type=int)
 
 args = parser.parse_args()
 
@@ -134,7 +135,7 @@ def train(epoch):
 
 for epoch in range(start_epoch, start_epoch + 200):
     train(epoch)
-    auc = kNN(epoch, net, lemniscate, loaders.train, loaders.valid, 1, args.nce_t, 0, device)
+    auc = kNN(epoch, net, lemniscate, loaders.train, loaders.valid, args.K, args.nce_t, 0, device)
 
     if auc > best_auc:
         print('Saving..')
