@@ -36,7 +36,6 @@ class BaseNet(nn.Module):
 
         self.phi = phi.data
 
- 
         # K x D
         mu = torch.sum(gamma.unsqueeze(-1) * z.unsqueeze(1), dim=0) / sum_gamma.unsqueeze(-1)
         self.mu = mu.data
@@ -53,7 +52,7 @@ class BaseNet(nn.Module):
         # K x D x D
         cov = torch.sum(gamma.unsqueeze(-1).unsqueeze(-1) * z_mu_outer, dim = 0) / sum_gamma.unsqueeze(-1).unsqueeze(-1)
         self.cov = cov.data
-
+        
         return phi, mu, cov
         
     def compute_energy(self, z, device, phi=None, mu=None, cov=None, size_average=True):
@@ -76,7 +75,13 @@ class BaseNet(nn.Module):
             # K x D x D
             cov_k = cov[i] + (torch.eye(D)*eps).to(device)
             cov_inverse.append(torch.inverse(cov_k).unsqueeze(0))
-
+            
+            #cov_k_inverse = cov_inverse[-1]
+            #print(torch.abs(torch.min(cov_k_inverse)))
+            #print(torch.abs(torch.max(cov_k_inverse)))
+            
+            #det_cov.append(np.linalg.slogdet(cov_k.data.cpu().numpy() * (2*np.pi))[1])
+            #det_cov.append(np.linalg.det((2*np.pi) / cov_inverse[-1].detach().cpu().numpy().squeeze()))
             det_cov.append(np.linalg.det(cov_k.data.cpu().numpy()* (2*np.pi)))
             cov_diag = cov_diag + torch.sum(1 / cov_k.diag())
 
@@ -84,6 +89,7 @@ class BaseNet(nn.Module):
         cov_inverse = torch.cat(cov_inverse, dim=0)
         # K
         det_cov = (torch.from_numpy(np.float32(np.array(det_cov)))).to(device)
+        #print(det_cov)
 
         # N x K
         exp_term_tmp = -0.5 * torch.sum(torch.sum(z_mu.unsqueeze(-1) * cov_inverse.unsqueeze(0), dim=-2) * z_mu, dim=-1)
@@ -94,7 +100,7 @@ class BaseNet(nn.Module):
 
         sample_energy = -max_val.squeeze() - torch.log(torch.sum(phi.unsqueeze(0) * exp_term / (torch.sqrt(det_cov)).unsqueeze(0), dim = 1) + eps)
 
-
+        #print(sample_energy)
         if size_average:
             sample_energy = torch.mean(sample_energy)
 

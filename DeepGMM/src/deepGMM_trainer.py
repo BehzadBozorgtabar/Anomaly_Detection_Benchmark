@@ -25,7 +25,7 @@ class Solver(object):
         self.optimizer = torch.optim.Adam(self.dagmm.parameters(), lr=self.lr)
 
     def reset_grad(self):
-        self.dagmm.zero_grad()
+        self.optimizer.zero_grad()
 
     def train(self):
         iters_per_epoch = len(self.train_loader)
@@ -41,8 +41,9 @@ class Solver(object):
             loss['sample_energy'] = 0
             loss['recon_error'] = 0
             loss['cov_diag'] = 0
-            
+
             for input_data, _, _ in tqdm(self.train_loader):
+            
                 iter_ctr += 1
                 start = time.time()
 
@@ -74,7 +75,7 @@ class Solver(object):
         self.reset_grad()
         total_loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(self.dagmm.parameters(), 5)
+        #torch.nn.utils.clip_grad_norm_(self.dagmm.parameters(), 5)
         self.optimizer.step()
 
         return total_loss,sample_energy, recon_error, cov_diag

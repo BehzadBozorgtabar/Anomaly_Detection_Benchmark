@@ -48,7 +48,7 @@ def return_loader(crop_size, batch_size, mode='train'):
         shuffle = True
 
 
-    dataroot='/media/bozorgta/Elements/Anomaly/ganomaly/data/NIH_Chest/'
+    dataroot='/data/author'
     train_ds = ImageFolder(os.path.join(dataroot, 'train'), transform)
     valid_ds = ImageFolder(os.path.join(dataroot, 'test'), transform)
 
