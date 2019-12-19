@@ -150,7 +150,7 @@ for epoch in range(start_epoch, start_epoch + 200):
         torch.save(state, './checkpoint/ckpt.t7')
         best_auc = auc
 
-    print('best auc score: {:.2f}'.format(best_auc * 100))
+    print('auc_score {:.2f} | best auc score: {:.2f}'.format(auc*100, best_auc * 100))
 
 #acc = kNN(0, net, lemniscate, loaders.train, loaders.valid, 200, args.nce_t, 1)
 #print('last accuracy: {:.2f}'.format(acc * 100))
