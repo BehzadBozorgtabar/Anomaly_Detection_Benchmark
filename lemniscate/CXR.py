@@ -22,19 +22,29 @@ from lib.NCECriterion import NCECriterion
 from lib.utils import AverageMeter
 from test import kNN
 
+model_names = ('resnet18')
+
 parser = argparse.ArgumentParser(description='PyTorch CXR Training')
-parser.add_argument('--lr', default=0.03, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.0003, type=float, help='learning rate')
+parser.add_argument('--pretrained', dest='pretrained', action='store_true', help='use pre-trained model')
+parser.add_argument('--crop_size', type=int, default=224)
+parser.add_argument('--resume', '-r', default='', type=str, help='resume from checkpoint')
 parser.add_argument('--resume', '-r', default='', type=str, help='resume from checkpoint')
 parser.add_argument('--test-only', action='store_true', help='test only')
 parser.add_argument('--low-dim', default=128, type=int,
                     metavar='D', help='feature dimension')
+parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet18',
+                    choices=model_names,
+                    help='model architecture: ' +
+                        ' | '.join(model_names) + ' (default: resnet18)')
 parser.add_argument('--nce-k', default=4096, type=int,
                     metavar='K', help='number of negative samples for NCE')
 parser.add_argument('--nce-t', default=0.1, type=float,
                     metavar='T', help='temperature parameter for softmax')
 parser.add_argument('--nce-m', default=0.5, type=float,
                     metavar='M', help='momentum for non-parametric updates')
-parser.add_argument('--workers', help='Number of workers to load the data', default=0, type=int)
+parser.add_argument('--batch_size', type=int, default=16)
+parser.add_argument('-j', '--workers', default=32, type=int, metavar='N',help='number of data loading workers (default: 4)')
 parser.add_argument('--K', help='Number of points to consider to calculate the metric', default=1,type=int)
 
 args = parser.parse_args()
