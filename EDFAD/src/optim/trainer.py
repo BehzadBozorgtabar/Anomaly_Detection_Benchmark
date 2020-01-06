@@ -1,0 +1,92 @@
+from base.base_trainer import BaseTrainer
+from base.base_dataset import BaseADDataset
+from base.base_net import BaseNet
+from torch.utils.data.dataloader import DataLoader
+from sklearn.metrics import roc_auc_score
+
+import logging
+import time
+import torch
+import torch.optim as optim
+import numpy as np
+import math
+
+from tqdm import tqdm
+
+
+class Solver(BaseTrainer):
+
+    def __init__(self, dataset : BaseADDataset, network : BaseNet, k : int, lr: float, n_epochs: int, batch_size: int, rep_dim:int, K : int,
+                 weight_decay: float, device: str, n_jobs_dataloader: int, w_rec : float, w_feat : float, cfg):
+
+        super().__init__(lr, n_epochs, batch_size, rep_dim, K, weight_decay, device, n_jobs_dataloader, w_rec, w_feat)
+        self.ae_net = network.to(self.device)
+        self.train_loader, self.test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+
+        self.optimizer = optim.Adam(self.ae_net.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        self.rec_loss = torch.nn.L1Loss()
+        self.feat_loss = torch.nn.MSELoss()
+        self.best_score = 0
+        self.k = k
+        self.cfg = cfg
+        self.logger = logging.getLogger()
+        #self.memory = torch.randn(size=(len(self.train_loader.dataset), 512))
+        self.memory = torch.randn(size=(len(self.train_loader.dataset), self.rep_dim)).to(self.device)
+
+    def train(self):
+
+        for e in range(1, self.n_epochs+1):
+            loss = 0
+
+            self.ae_net.train()
+            i = 0
+            for inputs, _, _ in tqdm(self.train_loader):
+                inputs = inputs.to(self.device)
+                self.optimizer.zero_grad()
+
+                latent1, rec_images = self.ae_net(inputs)
+                rec_loss = self.w_rec*self.rec_loss(inputs, rec_images)
+                rec_loss.backward()
+
+                loss += rec_loss.item()*inputs.shape[0]
+                self.optimizer.step()
+
+                self.memory[i*self.batch_size : min((i+1)*self.batch_size, len(self.train_loader.dataset))] = latent1
+                i+=1
+
+            score = self.test()
+            if score > self.best_score:
+                self.best_score = score
+                torch.save({'state_dict' : self.ae_net.state_dict()}, self.cfg.settings['xp_path'] + '/model.tar')
+            self.logger.info("Epoch %d/%d : Loss = %f | AUC = %.4f | BEST AUC = %.4f" % (e, self.n_epochs, loss/len(self.train_loader.dataset), score, self.best_score))
+
+    def test(self):
+
+        idx_label_score = []
+        self.ae_net.eval()
+        with torch.no_grad():
+            for data in tqdm(self.test_loader):
+                inputs, labels, idx = data
+                inputs = inputs.to(self.device)
+                latent1, rec_images = self.ae_net(inputs)
+
+                dist = torch.acos(torch.mm(latent1, self.memory.T)) / math.pi
+
+                scores, _ = dist.topk(self.K, dim=1, largest=False, sorted=True)
+                scores = torch.mean(scores, dim=1)
+                #scores = torch.mean((rec_images - inputs)**2, dim=(1,2,3))
+                #scores = (scores - torch.min(scores)) / (torch.max(scores) - torch.min(scores))
+
+                # Save triples of (idx, label, score) in a list
+                idx_label_score += list(zip(idx.cpu().data.numpy().tolist(),
+                                            labels.cpu().data.numpy().tolist(),
+                                            scores.cpu().data.numpy().tolist()))
+
+        self.test_scores = idx_label_score
+
+        # Compute AUC
+        _, labels, scores = zip(*idx_label_score)
+        labels = np.array(labels)
+        scores = np.array(scores)
+
+        return roc_auc_score(labels, scores)
