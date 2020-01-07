@@ -17,13 +17,13 @@ class CXR_Dataset(TorchvisionDataset):
         transform_train = transforms.Compose([transforms.Resize(isize),
                                     transforms.RandomHorizontalFlip(0.5),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])])
+                                    transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                                 std=[0.5, 0.5, 0.5])])
                                  
         transform_test = transforms.Compose([transforms.Resize(isize),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])])
+                                    transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                                 std=[0.5, 0.5, 0.5])])
 
         self.train_set = MyCXR(2, os.path.join(self.root, 'train'), transform_train)
 

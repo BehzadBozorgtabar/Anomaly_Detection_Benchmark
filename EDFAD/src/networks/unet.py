@@ -12,13 +12,19 @@ class Double_conv(nn.Module):
 
     def __init__(self, ich, och):
         super(Double_conv, self).__init__()
-        
+
         self.conv = nn.Sequential(nn.Conv2d(ich, och, 3, 1, 1, bias=False),
                                 nn.BatchNorm2d(och),
                                 nn.LeakyReLU(0.1),
                                 nn.Conv2d(och, och, 3, 1, 1, bias=False),
                                 nn.BatchNorm2d(och),
                                 nn.LeakyReLU(0.1))
+        """
+        self.conv = nn.Sequential(nn.Conv2d(ich, och, 3, 1, 1, bias=False),
+                                  nn.LeakyReLU(0.1),
+                                  nn.Conv2d(och, och, 3, 1, 1, bias=False),
+                                  nn.LeakyReLU(0.1))
+        """
                                 
     def forward(self, x):
         x = self.conv(x)
@@ -54,10 +60,13 @@ class Up(nn.Module):
     """
     def __init__(self, ich, och):
         super(Up, self).__init__()
-        
         self.up = nn.Sequential(nn.Upsample(mode='bilinear', scale_factor=2, align_corners=True),
                                 nn.Conv2d(ich, ich // 2, kernel_size=1, bias=False),
                                 nn.BatchNorm2d(ich // 2))
+        """
+        self.up = nn.Sequential(nn.Upsample(mode='bilinear', scale_factor=2, align_corners=True),
+                                nn.Conv2d(ich, ich // 2, kernel_size=1, bias=False))
+        """
         #self.conv = Double_conv(och + ich // 2, och)
         self.conv = Double_conv(ich // 2, och)
         
