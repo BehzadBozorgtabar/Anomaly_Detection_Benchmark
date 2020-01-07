@@ -16,10 +16,10 @@ from datasets.main import load_dataset
 # Settings
 ################################################################################
 @click.command()
-@click.argument('dataset_name', type=click.Choice(['mnist', 'cifar10', 'CXR_author', 'fmnist']))
-@click.argument('net_name', type=click.Choice(['mnist_LeNet', 'cifar10_LeNet', 'cifar10_LeNet_ELU', 'CXR_resnet18','fmnist_LeNet', 'unet']))
-@click.argument('xp_path')
-@click.argument('data_path', type=click.Path(exists=True))
+@click.argument('dataset_name', default='CXR_author')
+@click.argument('net_name', default='CXR_resnet18')
+@click.argument('xp_path', default='/media/bozorgta/Elements/SVDD/Anomaly_Detection_Benchmark/EDFAD/log')
+@click.argument('data_path', default='/media/bozorgta/Elements/Anomaly/ganomaly/data/NIH_Chest')
 @click.option('--load_model', type=click.Path(exists=True), default=None,
               help='Model file path (default: None).')
 @click.option('--device', type=str, default='cuda', help='Computation device to use ("cpu", "cuda", "cuda:2", etc.).')
