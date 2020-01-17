@@ -7,7 +7,7 @@ class BaseTrainer(ABC):
     """Trainer base class."""
 
     def __init__(self, lr: float, n_epochs: int, batch_size: int, rep_dim: int, K : int,
-                 weight_decay: float, device: str, n_jobs_dataloader: int, w_rec:float):
+                 weight_decay: float, device: str, n_jobs_dataloader: int, w_rec:float, w_contrast):
         super().__init__()
         self.lr = lr
         self.n_epochs = n_epochs
@@ -18,6 +18,7 @@ class BaseTrainer(ABC):
         self.device = device
         self.n_jobs_dataloader = n_jobs_dataloader
         self.w_rec = w_rec
+        self.w_contrast = w_contrast
 
     @abstractmethod
     def train(self) -> BaseNet:

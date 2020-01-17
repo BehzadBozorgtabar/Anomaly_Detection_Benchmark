@@ -12,59 +12,73 @@ class Double_conv(nn.Module):
 
     def __init__(self, ich, och):
         super(Double_conv, self).__init__()
-        
+        #"""
         self.conv = nn.Sequential(nn.Conv2d(ich, och, 3, 1, 1, bias=False),
-                                nn.BatchNorm2d(och),
-                                nn.LeakyReLU(0.1),
-                                nn.Conv2d(och, och, 3, 1, 1, bias=False),
-                                nn.BatchNorm2d(och),
-                                nn.LeakyReLU(0.1))
-                                
+                                  nn.BatchNorm2d(och),
+                                  nn.LeakyReLU(0.1),
+                                  nn.Conv2d(och, och, 3, 1, 1, bias=False),
+                                  nn.BatchNorm2d(och),
+                                  nn.LeakyReLU(0.1))
+        """
+        self.conv = nn.Sequential(nn.Conv2d(ich, och, 3, 1, 1, bias=False),
+                                  nn.LeakyReLU(0.1),
+                                  nn.Conv2d(och, och, 3, 1, 1, bias=False),
+                                  nn.LeakyReLU(0.1))
+        """
+
     def forward(self, x):
         x = self.conv(x)
         return x
-        
-        
-class Down(nn.Module):
 
+
+class Down(nn.Module):
     """
     Apply an encoding convolution, divides the image size by two
     args:
         - ich: Number of channel of the input
         - och: Number of channel of the output
     """
+
     def __init__(self, ich, och):
         super(Down, self).__init__()
-        
+
         self.pool = nn.MaxPool2d(2)
         self.conv = Double_conv(ich, och)
-        
-    def forward(self,x):
+
+    def forward(self, x):
         x = self.pool(x)
         x = self.conv(x)
         return x
-        
-class Up(nn.Module):
 
+
+class Up(nn.Module):
     """
     Apply a decoding deconvolution, multiplies the image size by two
     args:
         - ich: Number of channel of the input
         - och: Number of channel of the output
     """
+
     def __init__(self, ich, och):
         super(Up, self).__init__()
-        
+        #"""
         self.up = nn.Sequential(nn.Upsample(mode='bilinear', scale_factor=2, align_corners=True),
                                 nn.Conv2d(ich, ich // 2, kernel_size=1, bias=False),
                                 nn.BatchNorm2d(ich // 2))
-        self.conv = Double_conv(och + ich // 2, och)
-        
+        """
+        self.up = nn.Sequential(nn.Upsample(mode='bilinear', scale_factor=2, align_corners=True),
+                                nn.Conv2d(ich, ich // 2, kernel_size=1, bias=False))
+        """
+        # self.conv = Double_conv(och + ich // 2, och)
+        self.conv = Double_conv(ich // 2, och)
+
     def forward(self, enc_layer, dec_layer):
         dec = self.up(dec_layer)
-        x = torch.cat([enc_layer, dec], dim=1)
-        x = self.conv(x)
-        return x        
+        # x = torch.cat([enc_layer, dec], dim=1)
+        # x = self.conv(x)
+        x = self.conv(dec)
+        return x
+
 
 class Normalize(nn.Module):
 
@@ -77,14 +91,15 @@ class Normalize(nn.Module):
         out = x.div(norm)
         return out
 
-class UNET(nn.Module):
 
+class UNET(nn.Module):
     """
     Implements a unet network with convolutional encoding and deconvolutional decoding.
     The forward method implements skip connections between encoder and decoder to keep consistency in the features
     arg:
         n_classes: The number of channel output
     """
+
     def __init__(self, rep_dim):
         super(UNET, self).__init__()
 
@@ -105,10 +120,10 @@ class UNET(nn.Module):
         self.d4 = Up(128, 64)
         self.d5 = Up(64, 32)
         self.d6 = Up(32, 16)
-        
+
         self.final = nn.Conv2d(16, 3, 1, 1, 0, bias=False)
         self.activation = nn.Tanh()
-        
+
     def forward(self, x):
         e1 = self.input(x)
         e2 = self.e1(e1)
@@ -128,5 +143,5 @@ class UNET(nn.Module):
         x = self.d6(e1, x)
         x = self.final(x)
         x = self.activation(x)
-        
+
         return feature.squeeze(), x

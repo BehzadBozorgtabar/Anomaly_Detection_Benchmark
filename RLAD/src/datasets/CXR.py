@@ -17,29 +17,27 @@ class CXR_Dataset(TorchvisionDataset):
         transform_train = transforms.Compose([transforms.Resize(isize),
                                     transforms.RandomHorizontalFlip(0.5),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])])
+                                    transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                                 std=[0.5, 0.5, 0.5])])
                                  
         transform_test = transforms.Compose([transforms.Resize(isize),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])])
+                                    transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                                 std=[0.5, 0.5, 0.5])])
 
-        self.train_set = MyCXR(2, os.path.join(self.root, 'train'), transform_train)
+        self.train_set = MyCXR(os.path.join(self.root, 'train'), transform_train)
 
-        self.test_set = MyCXR(1, os.path.join(self.root, 'test'), transform_test)
+        self.test_set = MyCXR(os.path.join(self.root, 'test'), transform_test)
         
         
 class MyCXR(ImageFolder):
 
-    def __init__(self, augmentation,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(MyCXR, self).__init__(*args, **kwargs)
-        self.augmentation = augmentation
         
     def __len__(self):
-        return super(MyCXR, self).__len__()*self.augmentation
+        return super(MyCXR, self).__len__()
         
     def __getitem__(self, idx):
-        upd_idx = idx//self.augmentation
-        img, annot = super(MyCXR, self).__getitem__(upd_idx)
+        img, annot = super(MyCXR, self).__getitem__(idx)
         return img, annot, idx

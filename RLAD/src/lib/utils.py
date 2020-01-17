@@ -70,7 +70,7 @@ def traverse(net, loader, transform=None, tencrops=False, device='cpu'):
             inputs, targets, indexes = (inputs.to(device), targets.to(device),
                                                             indexes.to(device))
 
-            feats = net(inputs)
+            feats, _ = net(inputs)
             if tencrops:
                 feats = torch.squeeze(feats.view(bs, ncrops, -1).mean(1))
 

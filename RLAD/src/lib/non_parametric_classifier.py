@@ -77,8 +77,8 @@ class NonParametricClassifier(nn.Module):
         self.register_buffer('params',
                         torch.tensor([T, momentum]))
         stdv = 1. / math.sqrt(inputSize/3)
-        self.register_buffer('memory', torch.rand(outputSize, inputSize)
-                                                .mul_(2*stdv).add_(-stdv))
+
+        self.register_buffer('memory', torch.rand(outputSize, inputSize).mul_(2*stdv).add_(-stdv))
 
     def forward(self, x, y):
         out = NonParametricClassifierOP.apply(x, y, self.memory, self.params)
