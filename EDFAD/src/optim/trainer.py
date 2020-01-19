@@ -40,8 +40,7 @@ class Solver(BaseTrainer):
             loss = 0
 
             self.ae_net.train()
-            i = 0
-            for inputs, _, _ in tqdm(self.train_loader):
+            for inputs, _, indexes in tqdm(self.train_loader):
                 inputs = inputs.to(self.device)
                 self.optimizer.zero_grad()
 
@@ -52,10 +51,10 @@ class Solver(BaseTrainer):
                 loss += rec_loss.item()*inputs.shape[0]
                 self.optimizer.step()
 
-                self.memory[i*self.batch_size : min((i+1)*self.batch_size, len(self.train_loader.dataset))] = latent1
-                i+=1
+                self.memory[indexes] = latent1
 
             score, test_loss = self.test()
+            """"
             if score > self.best_score:
                 self.best_score = score
                 torch.save({'state_dict' : self.ae_net.state_dict()}, self.cfg.settings['xp_path'] + '/model.tar')
@@ -66,34 +65,33 @@ class Solver(BaseTrainer):
                 self.min_loss = test_loss
                 torch.save({'state_dict' : self.ae_net.state_dict()}, self.cfg.settings['xp_path'] + '/model.tar')
             self.logger.info("Epoch %d/%d :Train  Loss = %f | Test Loss = %f | AUC = %.4f " % (e, self.n_epochs, loss/len(self.train_loader.dataset), test_loss, score))
-            """
+            #"""
+
     def test(self, load_memory=False):
 
         idx_label_score = []
         self.ae_net.eval()
         with torch.no_grad():
             if load_memory:
-                i = 0
-                for inputs, _, _ in tqdm(self.train_loader):
+                for inputs, _, indexes in tqdm(self.train_loader):
                     inputs = inputs.to(self.device)
 
                     latent1, rec_images = self.ae_net(inputs)
-                    self.memory[i * self.batch_size: min((i + 1) * self.batch_size, len(self.train_loader.dataset))] = latent1
-                    i += 1
+                    self.memory[indexes] = latent1
 
             loss = 0
+            trainLabels = torch.LongTensor(self.train_loader.dataset.targets).to(self.device)
+            trainfeatures = self.memory[trainLabels==0].t()
             for data in tqdm(self.test_loader):
                 inputs, labels, idx = data
                 inputs = inputs.to(self.device)
                 latent1, rec_images = self.ae_net(inputs)
 
-                dist = torch.acos(torch.mm(latent1, self.memory.T)) / math.pi
+                dist = torch.acos(torch.mm(latent1, trainfeatures)) / math.pi
 
                 scores, _ = dist.topk(self.K, dim=1, largest=False, sorted=True)
                 scores = torch.mean(scores, dim=1)
                 loss += self.rec_loss(inputs, rec_images).item()*inputs.shape[0]
-                #scores = torch.mean((rec_images - inputs)**2, dim=(1,2,3))
-                #scores = (scores - torch.min(scores)) / (torch.max(scores) - torch.min(scores))
 
                 # Save triples of (idx, label, score) in a list
                 idx_label_score += list(zip(idx.cpu().data.numpy().tolist(),
@@ -104,6 +102,7 @@ class Solver(BaseTrainer):
         test_loss = loss / len(self.test_loader.dataset)
         # Compute AUC
         _, labels, scores = zip(*idx_label_score)
+        scores = (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
         labels = np.array(labels)
         scores = np.array(scores)
 

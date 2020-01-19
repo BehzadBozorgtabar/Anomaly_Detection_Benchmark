@@ -108,7 +108,6 @@ def main(dataset_name, net_name, xp_path, data_path, load_model, device, seed,
     dataset = load_dataset(dataset_name, data_path, normal_class, isize)
 
     network = build_network(net_name, rep_dim)
-
     trainer = Solver(dataset, network, lr, n_epochs, batch_size, rep_dim, k, weight_decay,
                     device, n_jobs_dataloader, w_rec, w_contrast, npc_temperature, npc_momentum, ans_select_rate,
                      ans_size, cfg)

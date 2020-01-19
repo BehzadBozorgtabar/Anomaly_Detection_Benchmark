@@ -21,7 +21,6 @@ class NonParametricClassifierOP(Function):
         out.div_(T)
             
         self.save_for_backward(x, memory, y, params)
-
         return out
 
     @staticmethod
@@ -57,7 +56,7 @@ class NonParametricClassifier(nn.Module):
         nn.Module
     """
 
-    def __init__(self, inputSize, outputSize, T=0.05, momentum=0.5):
+    def __init__(self, inputSize, outputSize, T=0.05, momentum=0.5, trainFeatures=None):
         """Non-parametric Classifier initial functin
         
         Initial function for non-parametric classifier

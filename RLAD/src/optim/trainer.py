@@ -50,13 +50,12 @@ class Solver(BaseTrainer):
         for r in range(0, (int) (1 / self.ans_select_rate) + 1):
 
             if r > 0:
-                self.ANs_discovery.update(0, self.npc)
+                self.ANs_discovery.update(r, self.npc)
 
             for e in range(1, self.n_epochs + 1):
-                loss = 0
 
                 # tracking variables
-                train_loss = AverageMeter()
+                train_loss = 0
 
                 # switch the model to train mode
                 self.ae_net.train()
@@ -69,21 +68,20 @@ class Solver(BaseTrainer):
                     #latent, _ = self.ae_net(inputs)
                     outputs = self.npc(latent, indexes)
                     rec_loss = self.recfn(rec_images, inputs)
-                    loss = self.w_contrast*(self.criterion(outputs, indexes, self.ANs_discovery) / len(inputs)) + self.w_rec*rec_loss
+                    loss = self.w_contrast*(self.criterion(outputs, indexes, self.ANs_discovery)) + self.w_rec*rec_loss
 
                     loss.backward()
-                    train_loss.update(loss.item() * len(inputs), inputs.size(0))
+                    train_loss += loss.item() * len(inputs)
 
                     self.optimizer.step()
 
-                print('Round: {round}/{nbr_round} Epoch: {epoch}/{tot_epochs}'
+                print('Round: {round}/{nbr_round} Epoch: {epoch}/{tot_epochs}' 
                         'LR: {learning_rate:.5f} '
-                        'Loss: {train_loss.val:.4f} ({train_loss.avg:.4f})'.format(
-                    round=r, nbr_round = 1 / self.ans_select_rate,epoch=e, tot_epochs=self.n_epochs,
-                    elps_iters=batch_idx, learning_rate=self.lr, train_loss=train_loss))
+                        'Loss: {train_loss:.4f}'.format(
+                    round=r, nbr_round = (int) (1 / self.ans_select_rate),epoch=e, tot_epochs=self.n_epochs,
+                    elps_iters=batch_idx, learning_rate=self.lr, train_loss=train_loss/len(self.train_loader.dataset)))
 
                 score = self.test()
-                print(score)
                 if score > self.best_score:
                     self.best_score = score
                     torch.save({'model_state_dict' : self.ae_net.state_dict(),
@@ -103,8 +101,6 @@ class Solver(BaseTrainer):
 
         trainFeatures = self.npc.memory
         trainLabels = torch.LongTensor(self.train_loader.dataset.targets).to(self.device)
-        #trainFeatures, trainLabels = traverse(self.ae_net, self.train_loader,
-                                    #self.test_loader.dataset.transform, device=self.device)
         trainFeatures = trainFeatures[trainLabels==0].t()
 
         with torch.no_grad():

@@ -20,19 +20,19 @@ from datasets.main import load_dataset
 @click.option('--load_model', type=click.Path(exists=True), default=None,
               help='Model file path (default: None).')
 @click.option('--device', type=str, default='cuda', help='Computation device to use ("cpu", "cuda", "cuda:2", etc.).')
-@click.option('--seed', type=int, default=-1, help='Set seed. If -1, use randomization.')
-@click.option('--batch_size', type=int, default=128, help='Batch size for mini-batch training.')
+@click.option('--seed', type=int, default=2, help='Set seed. If -1, use randomization.')
+@click.option('--batch_size', type=int, default=32, help='Batch size for mini-batch training.')
 @click.option('--n_jobs_dataloader', type=int, default=0,
               help='Number of workers for data loading. 0 means that the data will be loaded in the main process.')
 @click.option('--normal_class', type=int, default=0,
               help='Specify the normal class of the dataset (all other classes are considered anomalous).')
-@click.option('--isize', type=int, default=28,
+@click.option('--isize', type=int, default=256,
               help='Specify the image input size.')
-@click.option('--rep_dim', type=int, default=100,
+@click.option('--rep_dim', type=int, default=200,
               help='Specify the latent vector size.')
-@click.option('--k', type=int, default=1,
+@click.option('--k', type=int, default=100,
               help='Specify the number of closest neighbours to consider for metric calculation.')
-@click.option('--w_rec', type=float, default=50,
+@click.option('--w_rec', type=float, default=1,
               help='Specify the weight of reconstruction loss.')
 @click.option('--w_feat', type=float, default=1,
               help='Specify the weight of feature consistency loss')
