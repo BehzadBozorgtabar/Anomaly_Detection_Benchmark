@@ -31,7 +31,6 @@ class Solver(BaseTrainer):
         self.k = k
         self.cfg = cfg
         self.logger = logging.getLogger()
-        #self.memory = torch.randn(size=(len(self.train_loader.dataset), 512))
         self.memory = torch.randn(size=(len(self.train_loader.dataset), self.rep_dim)).to(self.device)
 
     def train(self):
@@ -54,18 +53,10 @@ class Solver(BaseTrainer):
                 self.memory[indexes] = latent1
 
             score, test_loss = self.test()
-            """"
-            if score > self.best_score:
-                self.best_score = score
-                torch.save({'state_dict' : self.ae_net.state_dict()}, self.cfg.settings['xp_path'] + '/model.tar')
-            self.logger.info("Epoch %d/%d : Loss = %f | AUC = %.4f | BEST AUC = %.4f" % (e, self.n_epochs, loss/len(self.train_loader.dataset), score, self.best_score))
-            """
-            score, test_loss = self.test()
             if test_loss < self.min_loss:
                 self.min_loss = test_loss
                 torch.save({'state_dict' : self.ae_net.state_dict()}, self.cfg.settings['xp_path'] + '/model.tar')
             self.logger.info("Epoch %d/%d :Train  Loss = %f | Test Loss = %f | AUC = %.4f " % (e, self.n_epochs, loss/len(self.train_loader.dataset), test_loss, score))
-            #"""
 
     def test(self, load_memory=False):
 

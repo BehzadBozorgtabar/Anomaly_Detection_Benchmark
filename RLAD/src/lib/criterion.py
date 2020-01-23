@@ -34,7 +34,6 @@ class Criterion(nn.Module):
             l_ans = -1 * torch.log(x_ans).sum(0)
 
         l_inst = 0.
-
         if instance_indexes.size(0) > 0:
             # compute loss for instance samples
             y_inst = y.index_select(0, instance_indexes)

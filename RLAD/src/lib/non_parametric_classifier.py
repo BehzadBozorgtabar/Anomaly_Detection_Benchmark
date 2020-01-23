@@ -56,7 +56,7 @@ class NonParametricClassifier(nn.Module):
         nn.Module
     """
 
-    def __init__(self, inputSize, outputSize, T=0.05, momentum=0.5, trainFeatures=None):
+    def __init__(self, inputSize, outputSize, T=0.05, momentum=0.5):
         """Non-parametric Classifier initial functin
         
         Initial function for non-parametric classifier
