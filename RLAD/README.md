@@ -1,9 +1,9 @@
-#Testing
+# Testing
 
-##Data
+## Data
 Put the dataset in data folder
 
-##Models
+## Models
 The models have been trained in a semi supervised way  
 Find the models in this [folder](https://drive.google.com/open?id=1Q1kXtS1u0OmtK-e6fNG0Djtft1zdz-oP).
 
@@ -38,7 +38,7 @@ k 100
 For both, you will find the checkpoints model after each round. 
 You will also find the best checkpoint (model.tar) with k=100 as validation has been made with k=100.
 
-##Run
+## Run
 Go into folder src and run:
 ```
 python test.py CXR_author unet ../log/test ../data/author --load_model 'model path' --k (k nearest neighbors to consider)
