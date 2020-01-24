@@ -231,6 +231,7 @@ class DeepSVDDTrainer(BaseTrainer):
 
         # Compute AUC
         _, labels, scores = zip(*idx_label_score)
+        scores = (scores - np.min(scores)) / (np.max(scores) - np.min(scores))
         labels = np.array(labels)
         scores = np.array(scores)
 
