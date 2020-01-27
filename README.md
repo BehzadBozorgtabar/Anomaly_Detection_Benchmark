@@ -16,7 +16,7 @@ The training pipeline allows pretraining of autoencoder. After some pretraining 
 Implementation of GAN baseline to learn distribution of normal samples. It's based on the paper : *Y. Tang, Y. Tang, M. Han, J. Xiao and R. M. Summers, "Abnormal Chest X-Ray Identification With Generative Adversarial One-Class Classifier," 2019 IEEE 16th International Symposium on Biomedical Imaging (ISBI 2019), Venice, Italy, 2019, pp. 1358-1361.*
 
 
-## EDFAD
+## MemDAE
 
 Baseline to detect anomalies by storing normal samples in a memory bank
 Trains an autoencoder which normalizes the features. It stores the corresponding features in a memory bank. The anomaly score is the mean radian between the test feature and the K nearest neighbors stored in the memory bank.
